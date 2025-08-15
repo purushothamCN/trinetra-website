@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mission Trinetra</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+
+    <!-- Custom Styles & Animations -->
+    <style>
+        /* Define custom font families */
+        .font-space-grotesk { font-family: 'Space Grotesk', sans-serif; }
+        .font-inter { font-family: 'Inter', sans-serif; }
+        .font-bebas-neue { font-family: 'Bebas Neue', cursive; }
+
+        /* Smooth scrolling behavior */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Set body background and hide overflow */
+        body {
+            background-color: #000000;
+            overflow-x: hidden;
+        }
+
+        /* Style for the background canvas */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Push to the very back */
+        }
+
+        main {
+            z-index: 1;
+        }
+
+        /* Animation for the rotating Earth */
+        @keyframes rotate-earth {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-rotate-earth {
+            animation: rotate-earth 90s linear infinite;
+        }
+
+        /* Glassmorphism effect for cards with hover animation */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease-in-out; /* Smooth transition for hover effects */
+        }
+
+        .glass-card:hover {
+            transform: translateY(-8px); /* Lifts the card up */
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.5), 0 0 40px rgba(56, 189, 248, 0.3); /* Cyan back-lit glow */
+        }
+
+        /* Hide scrollbar for gallery but allow scrolling */
+        .gallery-container::-webkit-scrollbar {
+            display: none;
+        }
+        .gallery-container {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        /* Style for the mission section background */
+        #mission-overview {
+            position: relative;
+            background-image: url('images/mission-background.jpg'); /* UPDATED IMAGE PATH */
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed; /* Creates a cool parallax effect */
+        }
+
+        #mission-overview::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.2) 20%, rgba(0,0,0,0.2) 80%, rgba(0,0,0,1) 100%);
+            z-index: 1;
+        }
+
+        #mission-overview .container {
+            position: relative;
+            z-index: 2; /* Ensures text is on top of the overlay */
+        }
+
+        /* New style for image container with faded edges */
+        .image-fade-edge {
+            -webkit-mask-image: radial-gradient(ellipse at center, black 60%, transparent 100%);
+            mask-image: radial-gradient(ellipse at center, black 60%, transparent 100%);
+        }
+    </style>
+</head>
+<body class="text-white">
+
+    <!-- Sticky Header -->
+    <header id="header" class="fixed top-0 left-0 w-full z-20 bg-black/30 backdrop-blur-md transition-colors duration-300">
+        <div class="container mx-auto flex items-center justify-between p-4 text-white">
+            <a href="#hero" class="font-space-grotesk text-2xl font-bold">
+                त्रिn<span class="inline-block transform -scale-x-100">e</span>ತ್ರ
+            </a>
+            <nav class="hidden md:flex items-center space-x-8">
+                <a href="#mission-overview" class="font-inter hover:text-cyan-300 transition-colors">Mission</a>
+                <a href="#satellite-specs" class="font-inter hover:text-cyan-300 transition-colors">Specs</a>
+                <a href="#timeline" class="font-inter hover:text-cyan-300 transition-colors">Timeline</a>
+                <a href="#team" class="font-inter hover:text-cyan-300 transition-colors">Team</a>
+                <a href="#gallery" class="font-inter hover:text-cyan-300 transition-colors">Gallery</a>
+            </nav>
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-button" class="md:hidden p-2 rounded-md hover:bg-white/10">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+            </button>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-black/80 backdrop-blur-md">
+            <a href="#mission-overview" class="block py-3 px-4 text-sm hover:bg-cyan-900/50 transition-colors mobile-link">Mission</a>
+            <a href="#satellite-specs" class="block py-3 px-4 text-sm hover:bg-cyan-900/50 transition-colors mobile-link">Specs</a>
+            <a href="#timeline" class="block py-3 px-4 text-sm hover:bg-cyan-900/50 transition-colors mobile-link">Timeline</a>
+            <a href="#team" class="block py-3 px-4 text-sm hover:bg-cyan-900/50 transition-colors mobile-link">Team</a>
+            <a href="#gallery" class="block py-3 px-4 text-sm hover:bg-cyan-900/50 transition-colors mobile-link">Gallery</a>
+        </div>
+    </header>
+
+    <!-- The canvas for the Three.js animation -->
+    <canvas id="bg-canvas"></canvas>
+
+    <main class="w-full relative">
+
+        <!-- Section 1: Hero Intro -->
+        <section id="hero" class="h-screen w-full flex flex-col items-center justify-center text-center p-4">
+            <div class="flex flex-col items-center">
+               <h1 class="font-space-grotesk font-extrabold tracking-tight text-white text-5xl sm:text-7xl md:text-[6rem] leading-none">
+                  त्रिn<span class="inline-block transform -scale-x-100">e</span>ತ್ರ
+               </h1>
+                <p class="mt-4 text-lg tracking-widest text-white/70 font-inter">
+                    One Orbit . One Payload . One Ocean
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 mt-10">
+                    <a href="#mission-overview" class="px-6 py-2 text-sm font-semibold text-white transition-colors duration-300 bg-transparent border border-white/50 rounded-lg hover:bg-white/10 backdrop-blur-sm">
+                        Mission
+                    </a>
+                    <a href="#satellite-specs" class="px-6 py-2 text-sm font-semibold text-white transition-colors duration-300 bg-transparent border border-white/50 rounded-lg hover:bg-white/10 backdrop-blur-sm">
+                        Learn More
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Mission Overview -->
+        <section id="mission-overview" class="w-full min-h-screen flex items-center px-4 py-20 lg:py-32">
+            <div class="container grid items-center gap-12 mx-auto lg:grid-cols-2 lg:gap-20">
+                <!-- Left Column: Text Content -->
+                <div class="flex flex-col gap-6 text-white">
+                    <h2 class="text-4xl font-bold tracking-wide md:text-5xl font-space-grotesk">
+                        Why Trinetra?
+                    </h2>
+                    <p class="text-lg text-white/80 font-inter">
+                        Our planet's oceans are facing unprecedented threats. Rising sea surface temperatures disrupt marine ecosystems, while the pervasive spread of microplastics and coastal pollution endangers life both in and out of the water. Understanding these complex issues requires a global perspective, yet traditional observation methods are often costly and slow.
+                    </p>
+                    <p class="text-lg text-white/80 font-inter">
+                        Trinetra is our answer. By leveraging the power of compact, low-cost CubeSat technology, we aim to democratize access to critical ocean data. Our mission is to provide a continuous, high-resolution view of our oceans, empowering scientists, policymakers, and communities to take informed action.
+                    </p>
+                     <p class="text-lg text-white/80 font-inter">
+                        This isn't just about collecting data; it's about creating a new paradigm for planetary stewardship, one where technology serves as a vigilant eye from orbit, watching over the blue heart of our world.
+                    </p>
+                </div>
+
+                <!-- Right Column: Animated Graphic -->
+                <div class="flex items-center justify-center">
+                    <div class="relative w-64 h-64 md:w-96 md:h-96 animate-rotate-earth">
+                        <!-- Orbit Path -->
+                        <svg class="absolute inset-0" viewBox="0 0 200 200">
+                            <path d="M 50,100 a 50,50 0 1,1 100,0 a 50,50 0 1,1 -100,0" fill="none" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1" transform="rotate(30 100 100)"></path>
+                        </svg>
+                        <!-- Black and White Globe -->
+                        <svg class="absolute inset-0" viewBox="0 0 200 200">
+                            <defs>
+                                <radialGradient id="globeGradient" cx="35%" cy="35%" r="65%">
+                                    <stop offset="0%" stop-color="#555"></stop>
+                                    <stop offset="100%" stop-color="#000"></stop>
+                                </radialGradient>
+                            </defs>
+                            <circle cx="100" cy="100" r="50" fill="url(#globeGradient)" />
+                            <circle cx="100" cy="100" r="50" fill="transparent" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>
+                            <!-- Graticule (lines of latitude and longitude) -->
+                            <path d="M100,50 A50,50 0 0,1 100,150" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                            <path d="M100,50 A50,50 0 0,0 100,150" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                            <path d="M65,56.7 A50,50 0 0,1 135,56.7" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                            <path d="M65,143.3 A50,50 0 0,0 135,143.3" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                            <ellipse cx="100" cy="100" rx="25" ry="50" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                            <ellipse cx="100" cy="100" rx="45" ry="50" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Satellite Specs -->
+        <section id="satellite-specs" class="w-full min-h-screen flex items-center px-4 py-20 lg:py-32 bg-black">
+            <div class="container mx-auto text-center text-white">
+                <h2 class="mb-4 text-4xl font-bold tracking-wide md:text-5xl font-space-grotesk">
+                    Inside Trinetra
+                </h2>
+                <p class="mb-16 text-lg text-white/70 font-inter">
+                    A compact powerhouse of observation technology.
+                </p>
+
+                <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+                    <div class="p-8 text-left rounded-xl glass-card">
+                        <div class="mb-4 text-cyan-300"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 17.5l-2.5-2.5-2.5 2.5"/><path d="M4 17.5l2.5-2.5 2.5 2.5"/><path d="M12 22V7"/><path d="M4 7h16"/><path d="M12 7V2l-2.5 2.5L12 7l2.5-2.5L12 2z"/></svg></div>
+                        <h3 class="mb-2 text-xl font-bold font-space-grotesk">Structure</h3>
+                        <p class="text-white/80 font-inter">1U CubeSat Standard, Aluminum 7075-T6 chassis for maximum durability and minimal weight.</p>
+                    </div>
+                    <div class="p-8 text-left rounded-xl glass-card">
+                        <div class="mb-4 text-cyan-300"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v4"/><path d="M18.36 5.64l-2.83 2.83"/><path d="M23 12h-4"/><path d="M18.36 18.36l-2.83-2.83"/><path d="M12 23v-4"/><path d="M5.64 18.36l2.83-2.83"/><path d="M1 12h4"/><path d="M5.64 5.64l2.83 2.83"/><circle cx="12" cy="12" r="2"/></svg></div>
+                        <h3 class="mb-2 text-xl font-bold font-space-grotesk">Power System</h3>
+                        <p class="text-white/80 font-inter">Body-mounted solar panels with a dedicated EPS managing a high-capacity Li-ion battery pack.</p>
+                    </div>
+                    <div class="p-8 text-left rounded-xl glass-card">
+                        <div class="mb-4 text-cyan-300"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/><circle cx="12" cy="12" r="7"/></svg></div>
+                        <h3 class="mb-2 text-xl font-bold font-space-grotesk">Mass</h3>
+                        <p class="text-white/80 font-inter">Total launch mass 1.33KG, optimized for rideshare launch vehicle requirements.</p>
+                    </div>
+                    <div class="p-8 text-left rounded-xl glass-card">
+                        <div class="mb-4 text-cyan-300"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-6-6m6 0H10.5M15 3l6 6m-6 0V4.5M3 3l6 6m-6 0h10.5M9 21l-6-6m6 0v10.5"/></svg></div>
+                        <h3 class="mb-2 text-xl font-bold font-space-grotesk">Dimensions</h3>
+                        <p class="text-white/80 font-inter">Stowed: 10x10x11.25 cm. Fully compliant with standard CubeSat deployers.</p>
+                    </div>
+                    <div class="p-8 text-left rounded-xl glass-card">
+                        <div class="mb-4 text-cyan-300"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20z"/><circle cx="12" cy="12" r="3"/></svg></div>
+                        <h3 class="mb-2 text-xl font-bold font-space-grotesk">Orbit Type</h3>
+                        <p class="text-white/80 font-inter">Low-Earth  Orbit (LEO) at an altitude of 450 km for consistent lighting conditions.</p>
+                    </div>
+                    <div class="p-8 text-left rounded-xl glass-card">
+                        <div class="mb-4 text-cyan-300"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg></div>
+                        <h3 class="mb-2 text-xl font-bold font-space-grotesk">Thermal System</h3>
+                        <p class="text-white/80 font-inter">Passive system using multi-layer insulation (MLI) and surface coatings to maintain operational temperatures.</p>
+                    </div>
+                </div>
+
+                <div class="mt-20">
+                    <button class="px-6 py-2 text-sm font-semibold text-white transition-colors duration-300 bg-transparent border border-white/50 rounded-lg hover:bg-white/10 backdrop-blur-sm">
+                        View Exploded Diagram
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Mission Timeline -->
+        <section id="timeline" class="w-full min-h-screen flex items-center px-4 py-20 lg:py-32 bg-black">
+            <div class="container mx-auto text-center text-white">
+                <h2 class="mb-4 text-4xl font-bold tracking-wide md:text-5xl font-space-grotesk">
+                    Journey to Launch
+                </h2>
+                <p class="mb-16 text-lg text-white/70 font-inter">
+                    From a simple idea to a fully operational eye in the sky, here is our journey.
+                </p>
+
+                <div class="grid lg:grid-cols-2 gap-16 items-center">
+                    <!-- Left Column: Image with faded edge -->
+                    <div class="flex justify-center items-center image-fade-edge">
+                        <img src="images/timeline-satellite.png" alt="Trinetra satellite render" class="max-w-xs md:max-w-sm lg:max-w-md rounded-lg">
+                    </div>
+
+
+                    <!-- Right Column: Timeline -->
+                    <div class="relative py-10">
+                        <!-- The vertical line -->
+                        <div class="absolute top-10 bottom-10 border-2 border-white/20 left-4"></div>
+
+                        <!-- Timeline Items Container -->
+                        <div class="space-y-16">
+                            <!-- Timeline Item 1 -->
+                            <div class="relative flex items-center justify-start w-full">
+                                <div class="absolute z-10 flex items-center justify-center w-8 h-8 bg-black border-2 rounded-full border-cyan-400 left-0"><div class="w-3 h-3 rounded-full bg-cyan-300"></div></div>
+                                <div class="pl-12 text-left">
+                                    <p class="text-sm font-semibold text-cyan-300">Q1 2025</p>
+                                    <h3 class="mt-1 text-xl font-bold font-space-grotesk">Ideation & Conception</h3>
+                                    <p class="mt-1 text-white/70 font-inter">Initial brainstorming and feasibility studies for low-cost ocean observation.</p>
+                                </div>
+                            </div>
+                            <!-- Timeline Item 2 -->
+                            <div class="relative flex items-center justify-start w-full">
+                                <div class="absolute z-10 flex items-center justify-center w-8 h-8 bg-black border-2 rounded-full border-cyan-400 left-0"><div class="w-3 h-3 rounded-full bg-cyan-300"></div></div>
+                                <div class="pl-12 text-left">
+                                    <p class="text-sm font-semibold text-cyan-300">Q2 2025</p>
+                                    <h3 class="mt-1 text-xl font-bold font-space-grotesk">Core Team & Design</h3>
+                                    <p class="mt-1 text-white/70 font-inter">Assembling the engineering team and finalizing the satellite's initial schematics.</p>
+                                </div>
+                            </div>
+                            <!-- Timeline Item 3 -->
+                            <div class="relative flex items-center justify-start w-full">
+                                <div class="absolute z-10 flex items-center justify-center w-8 h-8 bg-black border-2 rounded-full border-cyan-400 left-0"><div class="w-3 h-3 rounded-full bg-cyan-300"></div></div>
+                                <div class="pl-12 text-left">
+                                    <p class="text-sm font-semibold text-cyan-300">Q3 2025</p>
+                                    <h3 class="mt-1 text-xl font-bold font-space-grotesk">Simulation & Analysis</h3>
+                                    <p class="mt-1 text-white/70 font-inter">Running extensive thermal, structural, and orbital simulations.</p>
+                                </div>
+                            </div>
+                            <!-- Timeline Item 4 -->
+                            <div class="relative flex items-center justify-start w-full">
+                                <div class="absolute z-10 flex items-center justify-center w-8 h-8 bg-black border-2 rounded-full border-cyan-400 left-0"><div class="w-3 h-3 rounded-full bg-cyan-300"></div></div>
+                                <div class="pl-12 text-left">
+                                    <p class="text-sm font-semibold text-cyan-300">Q4 2025</p>
+                                    <h3 class="mt-1 text-xl font-bold font-space-grotesk">Fabrication & Prototyping</h3>
+                                    <p class="mt-1 text-white/70 font-inter">Building the first engineering model and beginning component manufacturing.</p>
+                                </div>
+                            </div>
+                            <!-- Timeline Item 5 -->
+                            <div class="relative flex items-center justify-start w-full">
+                                <div class="absolute z-10 flex items-center justify-center w-8 h-8 bg-black border-2 rounded-full border-cyan-400 left-0"><div class="w-3 h-3 rounded-full bg-cyan-300"></div></div>
+                                <div class="pl-12 text-left">
+                                    <p class="text-sm font-semibold text-cyan-300">Q1 2026</p>
+                                    <h3 class="mt-1 text-xl font-bold font-space-grotesk">Integration & Testing</h3>
+                                    <p class="mt-1 text-white/70 font-inter">Assembling the flight model and conducting rigorous system-wide tests.</p>
+                                </div>
+                            </div>
+                            <!-- Timeline Item 6 -->
+                            <div class="relative flex items-center justify-start w-full">
+                                <div class="absolute z-10 flex items-center justify-center w-8 h-8 bg-black border-2 rounded-full border-cyan-400 left-0"><div class="w-3 h-3 rounded-full bg-cyan-300"></div></div>
+                                <div class="pl-12 text-left">
+                                    <p class="text-sm font-semibold text-cyan-300">Q2 2026</p>
+                                    <h3 class="mt-1 text-xl font-bold font-space-grotesk">Ground Station Link</h3>
+                                    <p class="mt-1 text-white/70 font-inter">Establishing and testing communication protocols with our ground segment.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Department: Mentors -->
+<section class="mb-20 text-center">
+    <h3 class="mb-4 text-3xl font-bold tracking-wider text-cyan-300 font-bebas-neue">Mentors</h3>
+    <div class="w-24 h-1 bg-cyan-300 mx-auto mb-12 rounded-full"></div>
+    <div class="flex flex-wrap justify-center gap-x-6 gap-y-12">
+                <!-- Smitha Sasi -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-smitha.jpg" alt="Team Member Dr Smitha Sasi" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Dr Smitha Sasi</h4>
+            <p class="text-sm text-white/50">Chairman-STC SPOC</p>
+        </div>
+        <!-- Santosh B -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-santosh.jpg" alt="Team Member Dr Santosh B" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Dr Santosh B</h4>
+            <p class="text-sm text-white/50">Co-ordinator</p>
+        </div>
+        <!-- Prashanth Raghu -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-prashanth.jpg" alt="Team Member Prashanth Raghu" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Prashanth Raghu</h4>
+            <p class="text-sm text-white/50">CEO</p>
+        </div>
+        <!-- Dhanush DB -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-dhanush.jpg" alt="Team Member Dhanush DB" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Dhanush DB</h4>
+            <p class="text-sm text-white/50">COO</p>
+        </div>
+        <!-- Chirag Rao -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-chirag.jpg" alt="Team Member Chirag Rao" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Chirag Rao </h4>
+            <p class="text-sm text-white/50">CTO</p>
+        </div>
+    </div>
+</section>
+
+<!-- Department: Mission Operations -->
+<section class="mb-20 text-center">
+    <h3 class="mb-4 text-3xl font-bold tracking-wider text-cyan-300 font-bebas-neue">Mission Operations</h3>
+    <div class="w-24 h-1 bg-cyan-300 mx-auto mb-12 rounded-full"></div>
+    <div class="flex flex-wrap justify-center gap-x-6 gap-y-12">
+        <!-- Purushotham CN -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-purushotham.jpg" alt="Team Member Purushotham CN" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Purushotham CN</h4>
+            <p class="text-sm text-white/50">Project Leader (Captain)</p>
+        </div>
+        <!-- Tejas K -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-tejas.jpg" alt="Team Member Tejas K" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Tejas K</h4>
+            <p class="text-sm text-white/50">Project Leader(Vice Captain)</p>
+        </div>
+        
+    </div>
+</section>
+
+<!-- Department: Payload & Communication -->
+<section class="mb-20 text-center">
+    <h3 class="mb-4 text-3xl font-bold tracking-wider text-emerald-300 font-bebas-neue">Payload & Communication</h3>
+    <div class="w-24 h-1 bg-emerald-300 mx-auto mb-12 rounded-full"></div>
+    <div class="flex flex-wrap justify-center gap-x-6 gap-y-12">
+                 <!-- Jhanavi M -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-jhanavi.jpg" alt="Team Member Jhanavi M" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Jhanavi M</h4>
+            <p class="text-sm text-white/50">ECE - 7th Semester</p>
+        </div>
+        <!-- Navya Shree A V -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-navya.jpg" alt="Team Member Navya Shree A V" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Navya Shree A V</h4>
+            <p class="text-sm text-white/50">ETE - 7th Semester</p>
+        </div>
+        <!-- H. L. Purushotham Nag -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-purushotham-nag.jpg" alt="Team Member H. L. Purushotham Nag" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">H. L. Purushotham Nag</h4>
+            <p class="text-sm text-white/50">ETE - 7th Semester</p>
+        </div>
+        <!-- Ghanashyam -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-ghanashyam.jpg" alt="Team Member Ghanashyam" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Ghanashyam</h4>
+            <p class="text-sm text-white/50">ETE - 7th Semester</p>
+        </div>
+        <!-- Nidhi Rathishkanna -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-nidhi.jpg" alt="Team Member Nidhi Rathishkanna" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Nidhi Rathishkanna</h4>
+            <p class="text-sm text-white/50">ETE - 5th Semester</p>
+        </div>
+        <!-- Sneha Thanmayi -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-sneha-t.jpg" alt="Team Member Sneha Thanmayi" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Sneha Thanmayi</h4>
+            <p class="text-sm text-white/50">ETE - 5th Semester</p>
+        </div>
+        <!-- Sanjana Sahukar -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-sanjana.jpg" alt="Team Member Sanjana Sahukar" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Sanjana Sahukar</h4>
+            <p class="text-sm text-white/50">ETE - 3rd Semester</p>
+        </div>
+    </div>
+</section>
+
+<!-- Department: Software & Avionics -->
+<section class="mb-20 text-center">
+    <h3 class="mb-4 text-3xl font-bold tracking-wider text-rose-300 font-bebas-neue">Software & Avionics</h3>
+    <div class="w-24 h-1 bg-rose-300 mx-auto mb-12 rounded-full"></div>
+    <div class="flex flex-wrap justify-center gap-x-6 gap-y-12">
+        <!-- Malavika Srinivas T -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-malavika.jpg" alt="Team Member Malavika Srinivas T" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Malavika Srinivas T</h4>
+            <p class="text-sm text-white/50">AE - 7th Semester</p>
+        </div>
+        <!-- Shreyas -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-shreyas.jpg" alt="Team Member Shreyas" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Shreyas</h4>
+            <p class="text-sm text-white/50">AE - 7th Semester</p>
+        </div>
+        <!-- Emi Mariya -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-emi.jpg" alt="Team Member Emi Mariya" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Emi Mariya</h4>
+            <p class="text-sm text-white/50">CH - 3rd Semester</p>
+        </div>
+        <!-- Harshith V -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-harshith-v.jpg" alt="Team Member Harshith V" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Harshith V</h4>
+            <p class="text-sm text-white/50">MCA - 2nd Semester</p>
+        </div>
+        <!-- Harshith R -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-harshith-r.jpg" alt="Team Member Harshith R" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Harshith R</h4>
+            <p class="text-sm text-white/50">MCA - 2nd Semester</p>
+        </div>
+        <!-- MohanRam -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-mohanram.jpg" alt="Team Member MohanRam" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">MohanRam</h4>
+            <p class="text-sm text-white/50">MCA - 2nd Semester</p>
+        </div>
+        <!-- Gnaneeswar Reddy V -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-greddy.jpg" alt="Team Member Gnaneeswar Reddy V" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Gnaneeswar Reddy V</h4>
+            <p class="text-sm text-white/50">MCA - 2nd Semester</p>
+        </div>
+        <!-- Surya Prakash -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-surya.jpg" alt="Team Member Surya Prakash" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Surya Prakash</h4>
+            <p class="text-sm text-white/50">MCA - 2nd Semester</p>
+        </div>
+    </div>
+</section>
+
+<!-- Department: AI & Data Science -->
+<section class="mb-20 text-center">
+    <h3 class="mb-4 text-3xl font-bold tracking-wider text-amber-300 font-bebas-neue">AI & Data Science</h3>
+    <div class="w-24 h-1 bg-amber-300 mx-auto mb-12 rounded-full"></div>
+    <div class="flex flex-wrap justify-center gap-x-6 gap-y-12">
+
+        <!-- Himanshu Rai -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-himanshu.jpg" alt="Team Member Himanshu Rai" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Himanshu Rai</h4>
+            <p class="text-sm text-white/50">DS - 5th Semester</p>
+        </div>
+
+        <!-- Ashlesh -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-ashlesh.jpg" alt="Team Member Ashlesh" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Ashlesh</h4>
+            <p class="text-sm text-white/50">DS - 5th Semester</p>
+        </div>
+        <!-- Sneha P Pratap -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-sneha-p.jpg" alt="Team Member Sneha P Pratap" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Sneha P Pratap</h4>
+            <p class="text-sm text-white/50">AIML - 4th Semester</p>
+        </div>
+        <!-- Vudavagandla Lakshmi -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/AIML-V.L.Sruthi.jpg" alt="Team Member V.Lakshmi Sruthi" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">V.Lakshmi Sruthi</h4>
+            <p class="text-sm text-white/50">AIML - 4th Semester</p>
+        </div>
+        <!-- Shuvam Pal -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-shuvam.jpg" alt="Team Member Shuvam Pal" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Shuvam Pal</h4>
+            <p class="text-sm text-white/50">AIML - 2nd Semester</p>
+        </div>
+        <!-- Abhinand Prameesh -->
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-abhinand.jpg" alt="Team Member Abhinand Prameesh" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Abhinand Prameesh</h4>
+            <p class="text-sm text-white/50">AIML - 5th Semester</p>
+        </div>
+    </div>
+</section>
+
+<!-- Department: Web Development -->
+<section class="mb-20 text-center">
+    <h3 class="mb-4 text-3xl font-bold tracking-wider text-emerald-300 font-bebas-neue">Web Developer</h3>
+    <div class="w-24 h-1 bg-emerald-300 mx-auto mb-12 rounded-full"></div>
+    <div class="flex flex-wrap justify-center gap-x-6 gap-y-12">
+        <div class="flex flex-col items-center text-center">
+            <img src="images/team-murali.jpg" alt="Team Member Murali SS" class="w-24 h-24 mb-4 rounded-full object-cover border-2 border-white/30 transition-transform duration-300 hover:scale-110">
+            <h4 class="font-bold font-space-grotesk">Murali SS</h4>
+             <p class="text-sm text-white/50">MCA - 2nd Semester</p>
+        </div>
+    </div>
+</section>
+                <!-- And so on for all other departments and members... -->
+                <!-- Make sure to replace ALL placeholder images with the 'images/...' path -->
+
+
+
+        <!-- Section 9: Gallery -->
+        <section id="gallery" class="w-full px-4 py-20 lg:py-32 bg-black">
+            <div class="container mx-auto text-center text-white">
+                <h2 class="mb-4 text-4xl font-bold tracking-wide md:text-5xl font-space-grotesk">
+                    Trinetra in Action
+                </h2>
+                <p class="mb-16 text-lg text-white/70 font-inter">
+                    A glimpse into our labs, designs, and the journey so far.
+                </p>
+
+                <div class="relative flex items-center">
+                    <button id="scroll-left" class="absolute left-0 z-10 p-2 -translate-y-1/2 bg-black/50 rounded-full top-1/2 hover:bg-white/20 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                    </button>
+
+                    <!-- Gallery Container -->
+                    <div id="gallery-container" class="flex w-full pb-4 space-x-4 overflow-x-auto gallery-container">
+                        <!-- UPDATED IMAGE PATHS -->
+                        <img src="images/gallery-1.jpg" class="object-cover h-64 rounded-lg aspect-video" alt="Gallery image of lab work" onerror="this.onerror=null;this.src='https://placehold.co/600x400/000000/FFFFFF?text=Image+Not+Found';">
+                        <img src="images/gallery-2.jpg" class="object-cover h-64 rounded-lg aspect-video" alt="Gallery image of a 3D model" onerror="this.onerror=null;this.src='https://placehold.co/600x400/000000/FFFFFF?text=Image+Not+Found';">
+                        <img src="images/gallery-3.jpg" class="object-cover h-64 rounded-lg aspect-video" alt="Gallery image of lab work" onerror="this.onerror=null;this.src='https://placehold.co/600x400/000000/FFFFFF?text=Image+Not+Found';">
+                        <img src="images/gallery-4.jpg" class="object-cover h-64 rounded-lg aspect-video" alt="Gallery image of a 3D model" onerror="this.onerror=null;this.src='https://placehold.co/600x400/000000/FFFFFF?text=Image+Not+Found';">
+                        <img src="images/gallery-5.jpg" class="object-cover h-64 rounded-lg aspect-video" alt="Gallery image of a team meeting" onerror="this.onerror=null;this.src='https://placehold.co/600x400/000000/FFFFFF?text=Image+Not+Found';">
+                        <img src="images/gallery-6.jpg" class="object-cover h-64 rounded-lg aspect-video" alt="Gallery image of a circuit board" onerror="this.onerror=null;this.src='https://placehold.co/600x400/000000/FFFFFF?text=Image+Not+Found';">
+                        <img src="images/gallery-7.jpg" class="object-cover h-64 rounded-lg aspect-video" alt="Gallery image of an antenna test" onerror="this.onerror=null;this.src='https://placehold.co/600x400/000000/FFFFFF?text=Image+Not+Found';">
+                        <img src="images/gallery-8.jpg" class="object-cover h-64 rounded-lg aspect-video" alt="Gallery image of a 3D model" onerror="this.onerror=null;this.src='https://placehold.co/600x400/000000/FFFFFF?text=Image+Not+Found';">
+                        <img src="images/gallery-9.jpg" class="object-cover h-64 rounded-lg aspect-video" alt="Gallery image of a team meeting" onerror="this.onerror=null;this.src='https://placehold.co/600x400/000000/FFFFFF?text=Image+Not+Found';">
+                        <img src="images/gallery-10.jpg" class="object-cover h-64 rounded-lg aspect-video" alt="Gallery image of a circuit board" onerror="this.onerror=null;this.src='https://placehold.co/600x400/000000/FFFFFF?text=Image+Not+Found';">
+                        <img src="images/gallery-11.jpg" class="object-cover h-64 rounded-lg aspect-video" alt="Gallery image of an antenna test" onerror="this.onerror=null;this.src='https://placehold.co/600x400/000000/FFFFFF?text=Image+Not+Found';">
+
+
+                    </div>
+
+                    <button id="scroll-right" class="absolute right-0 z-10 p-2 -translate-y-1/2 bg-black/50 rounded-full top-1/2 hover:bg-white/20 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#0a0a0a] text-white/70 font-inter py-16 px-4 relative z-10">
+        <div class="container grid gap-12 mx-auto lg:grid-cols-4 md:grid-cols-2">
+            <div class="space-y-4">
+                <h3 class="text-xl font-bold text-white font-space-grotesk">Trinetra Project</h3>
+                <p class="text-sm">An initiative by the DSCE Bangalore, focused on low-cost orbital solutions for a oceanographic studies.</p>
+                <p class="text-sm">Space Cell | DSCE Bangalore,<br>Shavige Malleshwara Hills, 91st Main Rd, 1st Stage, Kumaraswamy Layout, Bengaluru, Karnataka 560078</p>
+            </div>
+            <div class="space-y-4">
+                <h4 class="font-bold tracking-wider text-white">Departments</h4>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="https://www.dsce.edu.in/academics/ug/telecommunication" class="hover:text-white"> ETE -(Electronics and Telecommunication Engineering)</a></li>
+                    <li><a href="https://www.dsce.edu.in/academics/ug/ece" class="hover:text-white">ECE -(Electronics and Communication Engineering)</a></li>
+                    <li><a href="https://www.dsce.edu.in/academics/pg/mca" class="hover:text-white"> MCA -(Masters of Computer Applications)</a></li>
+                    <li><a href="https://www.dsce.edu.in/academics/ug/data-science" class="hover:text-white"> DS -(Data Science Engineering)</a></li>
+                    <li><a href="https://www.dsce.edu.in/academics/ug/chemical-engg" class="hover:text-white"> CH -(Chemical Engineering)</a></li>
+                    <li><a href="https://www.dsce.edu.in/academics/ug/aeronautical" class="hover:text-white"> AE -(Aeronautical Engineering)</a></li>
+                    <li><a href="https://www.dsce.edu.in/academics/common-departments/physics" class="hover:text-white"> PHY-(Department of Physics) </a></li>
+                    <li><a href="https://www.dsce.edu.in/academics/ug/aiml" class="hover:text-white"> AI/ML-(AI/ML Engineering)</a></li>
+
+
+                </ul>
+            </div>
+            <div class="space-y-4">
+                <h4 class="font-bold tracking-wider text-white">People</h4>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="#" class="hover:text-white">Core Team</a></li>
+                    <li><a href="#" class="hover:text-white">Faculty Advisors</a></li>
+                    <li><a href="#" class="hover:text-white">Research Staff</a></li>
+                    <li><a href="#" class="hover:text-white">Collaborators</a></li>
+                </ul>
+            </div>
+            <div class="space-y-4">
+                <h4 class="font-bold tracking-wider text-white">Supported By</h4>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="https://www.inspace.gov.in/inspace" class="hover:text-white">INSPACE </a></li>
+                    <li><a href="https://www.dsce.edu.in" class="hover:text-white">DSCE </a></li>
+                    <li><a href="https://gonagoor.com" class="hover:text-white">Gonagoor Tech</a></li>
+
+                </ul>
+            </div>
+        </div>
+        <div class="container pt-8 mx-auto mt-12 text-sm text-center border-t border-white/20">
+            <div class="flex items-center justify-center mb-4 space-x-6">
+                <!-- LinkedIn Icon -->
+<a href="https://linkedin.com" class="hover:opacity-80" target="_blank" rel="noopener">
+    <svg class="w-6 h-6" fill="#0A66C2" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M16.338 16.338H13.67V12.16c0-.995-.017-2.277-1.387-2.277-1.389 0-1.601 1.086-1.601 2.206v4.248H8.014v-8.59h2.559v1.174h.037c.356-.675 1.227-1.387 2.526-1.387 2.703 0 3.203 1.778 3.203 4.092v4.711zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 114.128 0c0 1.14-.931 2.065-2.065 2.065zm1.282 8.905H4.056v-8.59h2.563v8.59z"/>
+    </svg>
+</a>
+
+<!-- Twitter (X) Icon -->
+<a href="https://twitter.com" class="hover:opacity-80" target="_blank" rel="noopener">
+    <svg class="w-6 h-6" fill="#1DA1F2" viewBox="0 0 24 24">
+        <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.71v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"/>
+    </svg>
+</a>
+
+<!-- Instagram Icon -->
+<a href="https://instagram.com" class="hover:opacity-80" target="_blank" rel="noopener">
+    <svg class="w-6 h-6" viewBox="0 0 24 24">
+        <defs>
+            <linearGradient id="ig-gradient" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#F58529" />
+                <stop offset="50%" stop-color="#DD2A7B" />
+                <stop offset="100%" stop-color="#515BD4" />
+            </linearGradient>
+        </defs>
+        <path fill="url(#ig-gradient)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85s-.011 3.585-.069 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.585-.012-4.85-.07c-3.25-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.85s.012-3.584.07-4.85c.149-3.225 1.664-4.771 4.919-4.919C8.415 2.175 8.796 2.163 12 2.163zm0 1.802c-3.264 0-3.628.014-4.89.07-2.695.123-4.043 1.47-4.167 4.167-.056 1.262-.069 1.627-.069 4.89s.013 3.628.069 4.89c.124 2.695 1.472 4.043 4.167 4.167 1.262.056 1.626.069 4.89.069s3.628-.013 4.89-.069c2.695-.124 4.043-1.472 4.167-4.167.056-1.262.069-1.627.069-4.89s-.013-3.628-.069-4.89c-.124-2.695-1.472-4.043-4.167-4.167-1.262-.056-1.626-.069-4.89-.069zm0 4.488c-1.895 0-3.431 1.536-3.431 3.431s1.536 3.431 3.431 3.431 3.431-1.536 3.431-3.431-1.536-3.431-3.431-3.431zm0 5.463c-1.121 0-2.032-.91-2.032-2.032s.91-2.032 2.032-2.032 2.032.91 2.032 2.032-.91 2.032-2.032 2.032zm4.908-6.428c-.743 0-1.344.602-1.344 1.344s.602 1.344 1.344 1.344 1.344-.602 1.344-1.344-.602-1.344-1.344-1.344z"/>
+    </svg>
+</a>
+
+<!-- GitHub Icon -->
+<a href="https://github.com" class="hover:opacity-80" target="_blank" rel="noopener">
+    <svg class="w-6 h-6" fill="#181717" viewBox="0 0 24 24">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M12 .5C5.649.5.5 5.649.5 12c0 5.095 3.292 9.397 7.865 10.919.575.105.785-.25.785-.555 0-.274-.01-1.004-.015-1.97-3.2.696-3.875-1.542-3.875-1.542-.523-1.327-1.278-1.681-1.278-1.681-1.045-.714.079-.699.079-.699 1.155.081 1.762 1.186 1.762 1.186 1.028 1.762 2.695 1.253 3.35.959.104-.745.402-1.253.73-1.541-2.554-.29-5.238-1.278-5.238-5.687 0-1.257.449-2.284 1.185-3.089-.118-.29-.514-1.457.112-3.037 0 0 .966-.31 3.165 1.18a10.96 10.96 0 0 1 2.88-.387c.976.004 1.957.132 2.88.387 2.198-1.49 3.162-1.18 3.162-1.18.628 1.58.232 2.747.114 3.037.738.805 1.183 1.832 1.183 3.089 0 4.42-2.688 5.394-5.253 5.678.41.354.777 1.045.777 2.106 0 1.52-.014 2.743-.014 3.118 0 .307.207.665.79.553C20.71 21.393 24 17.093 24 12c0-6.351-5.149-11.5-12-11.5z"/>
+    </svg>
+</a>
+
+            </div>
+
+            <p>&copy; 2025 Trinetra Project. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- Background Animation Script -->
+    <script>
+        // --- THREE.JS SETUP ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({
+            canvas: document.querySelector('#bg-canvas'),
+            antialias: true
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        // --- CREATING THE GRID ---
+        const gridSize = 100;
+        const gridDivisions = 40;
+        const gridColor = 0x333333; // A subtle dark grey for the grid
+        const animationSpeed = 0.2; // A slower, more cinematic speed
+
+        // Create a group to hold and rotate the grids
+        const gridGroup = new THREE.Group();
+        scene.add(gridGroup);
+
+        // Create the 'floor' grid
+        const gridHelper1 = new THREE.GridHelper(gridSize, gridDivisions, gridColor, gridColor);
+        gridHelper1.position.y = -2;
+        gridGroup.add(gridHelper1);
+
+        // Create the 'ceiling' grid
+        const gridHelper2 = new THREE.GridHelper(gridSize, gridDivisions, gridColor, gridColor);
+        gridHelper2.position.y = 2;
+        gridGroup.add(gridHelper2);
+
+        // Create a second identical group for seamless looping
+        const gridGroup2 = gridGroup.clone();
+        gridGroup2.position.z = -gridSize;
+        scene.add(gridGroup2);
+
+        // Rotate the parent groups to get the diamond tunnel shape
+        const rotationZ = Math.PI / 4; // 45 degrees
+        const rotationX = Math.PI / 8; // Slight downward tilt
+
+        gridGroup.rotation.z = rotationZ;
+        gridGroup.rotation.x = rotationX;
+        gridGroup2.rotation.z = rotationZ;
+        gridGroup2.rotation.x = rotationX;
+
+        camera.position.z = 10;
+
+        // --- ANIMATION LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Move the grids towards the camera
+            gridGroup.position.z += animationSpeed;
+            gridGroup2.position.z += animationSpeed;
+
+            // Seamless loop: when a grid moves past the camera, reset its position
+            if (gridGroup.position.z > gridSize) {
+                gridGroup.position.z = -gridSize;
+            }
+            if (gridGroup2.position.z > gridSize) {
+                gridGroup2.position.z = -gridSize;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // --- RESPONSIVENESS ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Start the animation
+        animate();
+    </script>
+
+    <!-- UI Interaction Scripts -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- HEADER SCROLL EFFECT ---
+            const header = document.getElementById('header');
+            if(header) {
+                window.addEventListener('scroll', () => {
+                    if (window.scrollY > 50) {
+                        header.classList.add('bg-black/80');
+                    } else {
+                        header.classList.remove('bg-black/80');
+                    }
+                });
+            }
+
+            // --- MOBILE MENU TOGGLE ---
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('hidden');
+                });
+                // Close mobile menu when a link is clicked
+                const mobileMenuLinks = mobileMenu.querySelectorAll('.mobile-link');
+                mobileMenuLinks.forEach(link => {
+                    link.addEventListener('click', () => {
+                        mobileMenu.classList.add('hidden');
+                    });
+                });
+            }
+
+            // --- GALLERY SLIDER ---
+            const galleryContainer = document.getElementById('gallery-container');
+            const scrollLeftButton = document.getElementById('scroll-left');
+            const scrollRightButton = document.getElementById('scroll-right');
+
+            if (galleryContainer && scrollLeftButton && scrollRightButton) {
+                const scrollAmount = 300; // Amount to scroll in pixels
+
+                scrollLeftButton.addEventListener('click', () => {
+                    galleryContainer.scrollBy({
+                        left: -scrollAmount,
+                        behavior: 'smooth'
+                    });
+                });
+
+                scrollRightButton.addEventListener('click', () => {
+                    galleryContainer.scrollBy({
+                        left: scrollAmount,
+                        behavior: 'smooth'
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
